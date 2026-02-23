@@ -1,0 +1,8 @@
+[submodule "gstreamer"]
+	path = gstreamer
+	url = https://gitlab.freedesktop.org/gstreamer/gstreamer.git
+	branch = 1.24
+[submodule "gst-plugins-rs"]
+	path = gst-plugins-rs
+	url = https://gitlab.freedesktop.org/gstreamer/gst-plugins-rs.git
+	branch = 0.13

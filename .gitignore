@@ -1,0 +1,3 @@
+gstreamer-install/
+gst-plugins-rs-install/
+*.tar.gz
