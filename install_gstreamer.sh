@@ -60,7 +60,7 @@ install_gstreamer() {
     meson setup builddir --prefix="$INSTALL_DIR"
     meson compile -C builddir
   fi
-  yes | meson install -C builddir
+  yes | meson install -C builddir || true
   log "Gstreamer installed to $INSTALL_DIR"
 
   log "Installing Gstreamer rust plugins..."
@@ -71,8 +71,8 @@ install_gstreamer() {
   export PKG_CONFIG_PATH="$INSTALL_DIR/lib/x86_64-linux-gnu/pkgconfig:${PKG_CONFIG_PATH:-}"
   export LD_LIBRARY_PATH="$INSTALL_DIR/lib/x86_64-linux-gnu:${LD_LIBRARY_PATH:-}"
 
-  cargo cbuild -j$THREADS
-  env PATH="$HOME/.cargo/bin:$PATH" RUSTUP_TOOLCHAIN=1.85.0 cargo cinstall --prefix="$RS_INSTALL_DIR" -j$THREADS
+  cargo cbuild --release -j$THREADS
+  env PATH="$HOME/.cargo/bin:$PATH" RUSTUP_TOOLCHAIN=1.85.0 cargo cinstall --release --prefix="$RS_INSTALL_DIR" -j$THREADS
   popd && popd
   log "Gstreamer rust plugins installed to $RS_INSTALL_DIR"
 

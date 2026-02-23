@@ -8,18 +8,25 @@ Pre-built GStreamer 1.24 and GStreamer Rust plugins (0.13) `.so` files for Ubunt
 2. Copy them to `/usr/local/lib/` (or your preferred library path)
 3. Run `sudo ldconfig`
 
+## Submodules
+
+This repo includes the following as git submodules (mirrors of the original upstream repos):
+
+- `gstreamer/` — mirror of [GStreamer](https://gitlab.freedesktop.org/gstreamer/gstreamer) (branch `1.24`)
+- `gst-plugins-rs/` — mirror of [GStreamer Rust plugins](https://gitlab.freedesktop.org/gstreamer/gst-plugins-rs) (branch `0.13`)
+
 ## Building from source
 
 If you prefer to build from source instead of using the pre-built binaries:
 
 ```bash
+git clone --recurse-submodules https://github.com/neuralzome/Gstreamer_release.git
+cd Gstreamer_release
 chmod +x install_gstreamer.sh
-sudo ./install_gstreamer.sh
+./install_gstreamer.sh
 ```
 
-This will clone, build, and install:
-- GStreamer 1.24 from `https://gitlab.freedesktop.org/gstreamer/gstreamer.git`
-- GStreamer Rust plugins 0.13 from `https://gitlab.freedesktop.org/gstreamer/gst-plugins-rs`
+The script handles all dependencies automatically (apt packages, meson via venv, rust toolchain).
 
 ### Prerequisites
 
