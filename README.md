@@ -6,7 +6,13 @@ Pre-built GStreamer 1.24 and GStreamer Rust plugins (0.13) `.so` files for Ubunt
 
 1. Download the `.tar` files from the [Releases](../../releases) page
 2. Copy them to `/usr/local/` (or your preferred library path) and extract for `.so` files.
-3. Run `sudo ldconfig`
+3. Run
+```sh
+sudo apt-get install -y libglib2.0-0 liborc-0.4-0                  │
+sudo tar xzf gstreamer-<version>-core.tar.gz -C /usr/local              │
+sudo tar xzf gst-plugins-rs-<version>.tar.gz -C /usr/local
+sudo ldconfig  
+```
 
 ## Submodules
 
