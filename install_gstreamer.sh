@@ -34,11 +34,11 @@ detect_platform() {
 }
 install_system_packages() {
   log "Updating system packages..."
-  RUN sudo apt-get update
+  sudo apt-get update
   log "Done"
 
-  RUN sudo ln -fs /usr/share/zoneinfo/UTC /etc/localtime
-  RUN sudo apt-get install -y tzdata
+  sudo ln -fs /usr/share/zoneinfo/UTC /etc/localtime
+  sudo apt-get install -y tzdata
 
   packages=(
     lsb-release
@@ -92,7 +92,7 @@ install_system_packages() {
     git-lfs
   )
   log "Installing apt packages..."
-  RUN sudo apt-get install -y "${packages[@]}"
+  sudo apt-get install -y "${packages[@]}"
   log "Done"
   git config --global --add safe.directory "$(pwd)"
 
