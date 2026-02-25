@@ -17,10 +17,12 @@ install_dependencies() {
   log "Installing build dependencies..."
   sudo apt-get update
   sudo apt-get install -y \
-    python3 python3-pip python3-venv \
+    software-properties-common python3 python3-pip python3-venv \
     git curl build-essential pkg-config flex bison \
     libglib2.0-dev libssl-dev libx264-dev libvpx-dev \
     libopus-dev libsrtp2-dev nasm cmake ninja-build \
+    libpng-dev libjpeg-dev libjpeg-turbo8-dev \
+    libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev \
     ca-certificates wget
 
   # Create venv and install meson inside it
@@ -42,8 +44,62 @@ install_dependencies() {
   log "Dependencies installed."
 }
 
+install_ffmpeg7() {
+  local version=""
+  local full_version=""
+
+  # Check if libavformat is available via pkg-config
+  if pkg-config --exists libavformat 2>/dev/null; then
+    full_version=$(pkg-config --modversion libavformat 2>/dev/null)
+    version=$(echo "$full_version" | cut -d. -f1)
+
+    # Validate that version is a number and check if it's >= 61 (FFmpeg 7.x)
+    if [[ "$version" =~ ^[0-9]+$ ]] && [ "$version" -ge 61 ]; then
+      log "FFmpeg 7 already installed (libavformat $full_version)."
+      return
+    fi
+  fi
+  log "Installing FFmpeg 7 development libraries (current libavformat: ${full_version:-not found})..."
+
+  # Add FFmpeg 7 PPA
+  sudo add-apt-repository -y ppa:ubuntuhandbook1/ffmpeg7
+  sudo apt-get update
+
+  # Remove old FFmpeg 4 dev packages if present
+  sudo apt-get remove -y --allow-change-held-packages \
+    libavcodec-dev libavformat-dev libavdevice-dev \
+    libavutil-dev libavfilter-dev libswscale-dev libswresample-dev 2>/dev/null || true
+
+  # Remove stale FFmpeg files from /usr/local (e.g., from GStreamer builds)
+  sudo rm -f /usr/local/lib/x86_64-linux-gnu/pkgconfig/libav*.pc \
+    /usr/local/lib/x86_64-linux-gnu/pkgconfig/libsw*.pc \
+    /usr/local/lib/x86_64-linux-gnu/pkgconfig/libpostproc.pc \
+    /usr/local/lib/pkgconfig/libav*.pc \
+    /usr/local/lib/pkgconfig/libsw*.pc \
+    /usr/local/lib/pkgconfig/libpostproc.pc 2>/dev/null || true
+  sudo rm -rf /usr/local/include/libav* \
+    /usr/local/include/libsw* \
+    /usr/local/include/libpostproc 2>/dev/null || true
+
+  # Install FFmpeg 7 from PPA
+  sudo apt-get install -y ffmpeg \
+    libavcodec-dev libavformat-dev libavdevice-dev \
+    libavutil-dev libavfilter-dev libswscale-dev libswresample-dev
+
+  # Verify installation
+  full_version=$(pkg-config --modversion libavformat 2>/dev/null)
+  version=$(echo "$full_version" | cut -d. -f1)
+  if ! [[ "$version" =~ ^[0-9]+$ ]] || [ "$version" -lt 61 ]; then
+    error "FFmpeg 7 installation failed. libavformat version: ${full_version:-not found} (expected >= 61)"
+    exit 1
+  fi
+  log "FFmpeg 7 installation complete (libavformat $full_version)."
+}
+
 install_gstreamer() {
   log "Installing Gstreamer..."
+  source "$HOME/.cargo/env"
+  source "$VENV_DIR/bin/activate"
   if ! command -v gst-inspect-1.0  >/dev/null 2>&1; then
     log "Gstreamer is not installed."
   else
@@ -57,24 +113,33 @@ install_gstreamer() {
   pushd "$SCRIPT_DIR/gstreamer"
   git checkout 1.24
   if [ ! -d "builddir" ]; then
-    meson setup builddir --prefix="$INSTALL_DIR"
-    meson compile -C builddir
+    "$VENV_DIR/bin/meson" setup builddir --prefix=/usr/local
+    "$VENV_DIR/bin/meson" compile -C builddir
   fi
-  yes | meson install -C builddir || true
-  log "Gstreamer installed to $INSTALL_DIR"
+  yes | sudo "$VENV_DIR/bin/meson" install -C builddir || true
+  sudo ldconfig
+  log "Gstreamer installed to /usr/local"
+
+  log "Copying Gstreamer files to $INSTALL_DIR..."
+  sudo cp -r /usr/local/* "$INSTALL_DIR/"
+  sudo chown -R $(whoami) "$INSTALL_DIR"
+  log "Gstreamer files copied to $INSTALL_DIR"
 
   log "Installing Gstreamer rust plugins..."
   pushd "$SCRIPT_DIR/gst-plugins-rs"
   git checkout 0.13
   cargo install cargo-c --version 0.10.13+cargo-0.88.0 --locked
 
-  export PKG_CONFIG_PATH="$INSTALL_DIR/lib/x86_64-linux-gnu/pkgconfig:${PKG_CONFIG_PATH:-}"
-  export LD_LIBRARY_PATH="$INSTALL_DIR/lib/x86_64-linux-gnu:${LD_LIBRARY_PATH:-}"
-
   cargo cbuild --release -j$THREADS
-  env PATH="$HOME/.cargo/bin:$PATH" RUSTUP_TOOLCHAIN=1.85.0 cargo cinstall --release --prefix="$RS_INSTALL_DIR" -j$THREADS
+  env PATH="$HOME/.cargo/bin:$PATH" RUSTUP_TOOLCHAIN=1.85.0 cargo cinstall --release --prefix=/usr/local -j$THREADS
+  sudo ldconfig
+  log "Gstreamer rust plugins installed to /usr/local"
+
+  log "Copying Rust plugin files to $RS_INSTALL_DIR..."
+  sudo cp -r /usr/local/* "$RS_INSTALL_DIR/"
+  sudo chown -R $(whoami) "$RS_INSTALL_DIR"
+  log "Rust plugin files copied to $RS_INSTALL_DIR"
   popd && popd
-  log "Gstreamer rust plugins installed to $RS_INSTALL_DIR"
 
   log "Creating tarballs..."
   tar czf "$SCRIPT_DIR/gstreamer-1.24-core.tar.gz" -C "$INSTALL_DIR" .
@@ -84,4 +149,5 @@ install_gstreamer() {
 }
 
 install_dependencies
+install_ffmpeg7
 install_gstreamer
