@@ -169,9 +169,9 @@ install_gstreamer() {
 
   log "Creating tarballs..."
   tar czf "$SCRIPT_DIR/gstreamer-$version-$PLATFORM-core.tar.gz" -C "$INSTALL_DIR" .
-  tar czf "$SCRIPT_DIR/gst-plugins-rs-$version-$PLATFORM.tar.gz" -C "$RS_INSTALL_DIR" .
+  tar czf "$SCRIPT_DIR/gst-plugins-rs-$rs_version-$PLATFORM.tar.gz" -C "$RS_INSTALL_DIR" .
   log "Tarballs created:"
-  ls -lh "$SCRIPT_DIR/gstreamer-$version-$PLATFORM-core.tar.gz" "$SCRIPT_DIR/gst-plugins-rs-$version-$PLATFORM.tar.gz"
+  ls -lh "$SCRIPT_DIR/gstreamer-$version-$PLATFORM-core.tar.gz" "$SCRIPT_DIR/gst-plugins-rs-$rs_version-$PLATFORM.tar.gz"
 }
 detect_platform
 install_dependencies
