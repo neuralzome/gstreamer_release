@@ -7,11 +7,31 @@ THREADS=$((THREADS > 1 ? THREADS - 1 : 1))
 VENV_DIR="/tmp/gst-build-venv"
 INSTALL_DIR="$SCRIPT_DIR/gstreamer-install"
 RS_INSTALL_DIR="$SCRIPT_DIR/gst-plugins-rs-install"
+PLATFORM=""
+AARCH=""
 
 export PATH="$HOME/.cargo/bin:$PATH"
 
 log() { echo "[INFO] $*"; }
 error() { echo "[ERROR] $*" >&2; }
+
+detect_platform() {
+  case $(uname -m) in
+  x86_64)
+    PLATFORM="amd64"
+    AARCH="x86_64"
+    ;;
+  aarch64)
+    PLATFORM="arm64"
+    AARCH="aarch64"
+    ;;
+  *)
+    error "Unsupported architecture: $(uname -m)"
+    exit 1
+    ;;
+  esac
+  log "Detected platform: ${PLATFORM}, aarch: ${AARCH}"
+}
 
 install_dependencies() {
   log "Installing build dependencies..."
@@ -97,6 +117,12 @@ install_ffmpeg7() {
 }
 
 install_gstreamer() {
+
+  local version="1.24"
+  local rs_version="0.13"
+  local cargo_c_version="0.10.13+cargo-0.88.0"
+  local rustup_toolchain="1.85.0"
+
   log "Installing Gstreamer..."
   source "$HOME/.cargo/env"
   source "$VENV_DIR/bin/activate"
@@ -111,7 +137,7 @@ install_gstreamer() {
   mkdir -p "$RS_INSTALL_DIR"
 
   pushd "$SCRIPT_DIR/gstreamer"
-  git checkout 1.24
+  git checkout $version
   if [ ! -d "builddir" ]; then
     "$VENV_DIR/bin/meson" setup builddir --prefix=/usr/local
     "$VENV_DIR/bin/meson" compile -C builddir
@@ -127,11 +153,11 @@ install_gstreamer() {
 
   log "Installing Gstreamer rust plugins..."
   pushd "$SCRIPT_DIR/gst-plugins-rs"
-  git checkout 0.13
-  cargo install cargo-c --version 0.10.13+cargo-0.88.0 --locked
+  git checkout $rs_version
+  cargo install cargo-c --version $cargo_c_version --locked
 
   cargo cbuild --release -j$THREADS
-  sudo env PATH="$HOME/.cargo/bin:$PATH" RUSTUP_TOOLCHAIN=1.85.0 cargo cinstall --release --prefix=/usr/local -j$THREADS
+  sudo env PATH="$HOME/.cargo/bin:$PATH" RUSTUP_TOOLCHAIN=$rustup_toolchain cargo cinstall --release --prefix=/usr/local -j$THREADS
   sudo ldconfig
   log "Gstreamer rust plugins installed to /usr/local"
 
@@ -142,12 +168,12 @@ install_gstreamer() {
   popd && popd
 
   log "Creating tarballs..."
-  tar czf "$SCRIPT_DIR/gstreamer-1.24-core.tar.gz" -C "$INSTALL_DIR" .
-  tar czf "$SCRIPT_DIR/gst-plugins-rs-0.13.tar.gz" -C "$RS_INSTALL_DIR" .
+  tar czf "$SCRIPT_DIR/gstreamer-$version-$PLATFORM-core.tar.gz" -C "$INSTALL_DIR" .
+  tar czf "$SCRIPT_DIR/gst-plugins-rs-$version-$PLATFORM.tar.gz" -C "$RS_INSTALL_DIR" .
   log "Tarballs created:"
-  ls -lh "$SCRIPT_DIR/gstreamer-1.24-core.tar.gz" "$SCRIPT_DIR/gst-plugins-rs-0.13.tar.gz"
+  ls -lh "$SCRIPT_DIR/gstreamer-$version-$PLATFORM-core.tar.gz" "$SCRIPT_DIR/gst-plugins-rs-$version-$PLATFORM.tar.gz"
 }
-
+detect_platform
 install_dependencies
 install_ffmpeg7
 install_gstreamer
