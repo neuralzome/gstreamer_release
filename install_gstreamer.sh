@@ -131,7 +131,7 @@ install_gstreamer() {
   cargo install cargo-c --version 0.10.13+cargo-0.88.0 --locked
 
   cargo cbuild --release -j$THREADS
-  env PATH="$HOME/.cargo/bin:$PATH" RUSTUP_TOOLCHAIN=1.85.0 cargo cinstall --release --prefix=/usr/local -j$THREADS
+  sudo env PATH="$HOME/.cargo/bin:$PATH" RUSTUP_TOOLCHAIN=1.85.0 cargo cinstall --release --prefix=/usr/local -j$THREADS
   sudo ldconfig
   log "Gstreamer rust plugins installed to /usr/local"
 
