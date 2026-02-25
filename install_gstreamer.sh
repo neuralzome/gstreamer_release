@@ -32,19 +32,75 @@ detect_platform() {
   esac
   log "Detected platform: ${PLATFORM}, aarch: ${AARCH}"
 }
+install_system_packages() {
+  log "Updating system packages..."
+  RUN sudo apt-get update
+  log "Done"
+
+  RUN sudo ln -fs /usr/share/zoneinfo/UTC /etc/localtime
+  RUN sudo apt-get install -y tzdata
+
+  packages=(
+    lsb-release
+    libserial-dev
+    pkgconf
+    libclang-dev
+    libatk-bridge2.0
+    libfontconfig1-dev
+    libfreetype6-dev
+    libglib2.0-dev
+    libgtk-3-dev
+    libssl-dev
+    libxcb-render0-dev
+    libxcb-shape0-dev
+    libxcb-xfixes0-dev
+    libxkbcommon-dev
+    libxkbcommon-x11-dev
+    patchelf
+    unzip
+    software-properties-common
+    ca-certificates
+    doxygen
+    g++
+    libeigen3-dev
+    libgdal-dev
+    python3-dev
+    libpython3-dev
+    python3-matplotlib
+    python3-tk
+    lcov
+    libgtest-dev
+    libtbb-dev
+    swig
+    libgeos-dev
+    gnuplot
+    libtinyxml2-dev
+    nlohmann-json3-dev
+    tmuxp
+    rtklib
+    lz4
+    zstd
+    flex
+    bison
+    libvpx-dev
+    libx264-dev
+    libyuv-dev
+    libopus-dev
+    libsrtp2-1
+    libsrtp2-dev
+    nasm
+    git-lfs
+  )
+  log "Installing apt packages..."
+  RUN sudo apt-get install -y "${packages[@]}"
+  log "Done"
+  git config --global --add safe.directory "$(pwd)"
+
+}
+
 
 install_dependencies() {
   log "Installing build dependencies..."
-  sudo apt-get update
-  sudo apt-get install -y \
-    software-properties-common python3 python3-pip python3-venv \
-    git curl build-essential pkg-config flex bison \
-    libglib2.0-dev libssl-dev libx264-dev libvpx-dev \
-    libopus-dev libsrtp2-dev nasm cmake ninja-build \
-    libpng-dev libjpeg-dev libjpeg-turbo8-dev \
-    libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev \
-    ca-certificates wget
-
   # Create venv and install meson inside it
   if [ ! -d "$VENV_DIR" ]; then
     log "Creating build venv..."
@@ -174,6 +230,7 @@ install_gstreamer() {
   ls -lh "$SCRIPT_DIR/gstreamer-$version-$PLATFORM-core.tar.gz" "$SCRIPT_DIR/gst-plugins-rs-$rs_version-$PLATFORM.tar.gz"
 }
 detect_platform
+install_system_packages
 install_dependencies
 install_ffmpeg7
 install_gstreamer
