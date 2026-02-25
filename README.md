@@ -26,7 +26,7 @@ This repo includes the following as git submodules (mirrors of the original upst
 If you prefer to build from source instead of using the pre-built binaries:
 
 ```bash
-git clone --recurse-submodules https://github.com/neuralzome/Gstreamer_release.git
+git clone --recurse-submodules https://github.com/neuralzome/gstreamer_release.git
 cd Gstreamer_release
 chmod +x install_gstreamer.sh
 ./install_gstreamer.sh
