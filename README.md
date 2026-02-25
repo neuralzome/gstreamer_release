@@ -27,7 +27,7 @@ If you prefer to build from source instead of using the pre-built binaries:
 
 ```bash
 git clone --recurse-submodules https://github.com/neuralzome/gstreamer_release.git
-cd Gstreamer_release
+cd gstreamer_release
 chmod +x install_gstreamer.sh
 ./install_gstreamer.sh
 ```
